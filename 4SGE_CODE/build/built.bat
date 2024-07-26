@@ -1,9 +1,8 @@
 @echo off
 cls
-del OGL.exe
-del OGL.obj
-del OGL.res
-cls
+del ..\bin\OGL.exe
+del ..\bin\OGL.obj
+del ..\bin\OGL.res
 
 cl.exe /Fo:..\bin\OGL.obj /c /EHsc /I "C:\\glew-2.1.0\\include" ..\src\core\OGL.cpp
 rc.exe /Fo ..\bin\OGL.res ..\res\icon\OGL.rc
