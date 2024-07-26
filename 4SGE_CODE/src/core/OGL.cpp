@@ -1,12 +1,13 @@
 #include<windows.h>
 #include<stdio.h>
 #include<stdlib.h>
-#include "OGL.h"
+#include "..\..\include\core\OGL.h"
 
 //*** OpenGL Headers ***//
-#include<gl/glew.h>
+//#include<gl/glew.h>
+#include<C:/glew-2.1.0/include/GL/glew.h>
 #include<gl/GL.h>
-#include"vmath.h"
+#include"..\..\include\math\vmath.h"
 
 using namespace vmath;
 
@@ -74,7 +75,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLi
 	
 	//*** Code ***
 	
-	if (fopen_s(&gpFILE, "Log.txt", "w") != 0)
+	if (fopen_s(&gpFILE, "..\\log\\Log.txt", "w") != 0)
 	{
 		MessageBox(NULL, TEXT("Log Create Hou Shakat Nahi"), TEXT("Error"), MB_OK || MB_ICONERROR);
 		exit(0);
