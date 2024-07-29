@@ -1,7 +1,14 @@
-#include<windows.h>
+#ifndef UNICODE
+#define UNICODE
+#endif
+
+///*** Standard C Headers ***
 #include<stdio.h>
 #include<stdlib.h>
-#include "..\..\include\core\OGL.h"
+
+///*** My Headers ***
+#include "..\..\include\core\window.hpp"
+#include "..\..\include\core\windowCallback.hpp"
 
 //*** OpenGL Headers ***//
 //#include<gl/glew.h>
@@ -23,240 +30,32 @@ GLuint vbo_color            = 0;
 GLuint mvpMatrixUniform     = 0;
 mat4 perspectiveProjectionMatrix;//in vmath.h
 
-
+Window myWindow;
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLine, int iCmdShow)
 {
-	//*** Function Declarations ***
-	int initialize(void);
-	void uninitialize(void);
-	void display(void);
-	void update(void);
+	//*** Local vaiables *** 
 
-	//*** Local Variable Declarations ***
-	WNDCLASSEX wndclass;
-	HWND hwnd;
-	TCHAR szAppName[] = TEXT("Tushar_Wagdare_Chi_Window");
-	MSG msg;
-	int iResult       = 0;
-	BOOL bDone        = FALSE;
-	//For resolution
-	int iWinWidth, iWinHight;
-	iWinWidth         = GetSystemMetrics(SM_CXSCREEN);
-	iWinHight         = GetSystemMetrics(SM_CYSCREEN);
-
-	
 	//*** Code ***
-	
+	//*** Log file creation ***
 	if (fopen_s(&gpFILE, "..\\log\\Log.txt", "w") != 0)
 	{
 		MessageBox(NULL, TEXT("Log Create Hou Shakat Nahi"), TEXT("Error"), MB_OK || MB_ICONERROR);
 		exit(0);
 	}
 	fprintf(gpFILE, "Program Started Successfully\n\n");
-	fprintf(gpFILE, "********************************************************\n");
 
 
-	//*** WNDCLASSEX INITIALIZATION ***
-	wndclass.cbSize        = sizeof(WNDCLASSEX);
-	wndclass.style         = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
-	wndclass.cbClsExtra    = 0;
-	wndclass.cbWndExtra    = 0;
-	wndclass.lpfnWndProc   = WndProc;
-	wndclass.hInstance     = hInstance;
-	wndclass.hbrBackground = (HBRUSH)GetStockObject(BLACK_BRUSH);
-	wndclass.hIcon = LoadIcon(hInstance, MAKEINTRESOURCE(MYICON));
-	wndclass.hCursor       = LoadCursor(NULL, IDC_ARROW);
-	wndclass.lpszClassName = szAppName;
-	wndclass.lpszMenuName  = NULL;
-	wndclass.hIconSm       = LoadIcon(hInstance, MAKEINTRESOURCE(MYICON));
 
-
-	//*** REGISTER WNDCLASSEX ***
-	RegisterClassEx(&wndclass);
-
-
-	//*** CREATE WINDOW ***
-	hwnd = CreateWindowEx(WS_EX_APPWINDOW,
-		szAppName,
-		TEXT("Tushar Tulshiram Wagdare"),
-		WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN | WS_CLIPSIBLINGS | WS_VISIBLE,  
-		(iWinWidth / 2) - (800 / 2),
-		(iWinHight / 2) - (600 / 2),
-		WIN_WIDTH,
-		WIN_HIGHT,
-		NULL,
-		NULL,
-		hInstance,
-		NULL);
-
-
-	ghwnd = hwnd;
-
-
-	//*** Initialization ***
-	iResult = initialize();
-	if (iResult != 0)
-	{
-		MessageBox(hwnd, TEXT("initialize() Failed !"), TEXT("Error"), MB_OK || MB_ICONERROR);
-		DestroyWindow(hwnd);
-	}
-
-
-	//*** SHOW THE WINDOW ***
-	ShowWindow(hwnd, iCmdShow);
-	SetForegroundWindow(hwnd);
-	SetFocus(hwnd);
-
-
-	//*** Game LOOP ***
-	while(bDone == FALSE)
-	{
-		if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
-		{
-			if (msg.message == WM_QUIT)
-				bDone = TRUE;
-			else
-			{
-				TranslateMessage(&msg);
-				DispatchMessage(&msg);
-			}
-		}
-		else
-		{
-			if (gbActive == TRUE)
-			{
-				//*** Render ***
-				display();
-
-				//*** Update ***
-				update();
-			}
-		}
-	}
-
-
-	//*** Uninitialization ***
-	uninitialize();
-
-
-	return((int)msg.wParam);
+	return(myWindow.initGameLoop());
 }
 
 
-
-LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
-{
-	//*** Function Declaration ***
-	void ToggleFullscreen(void);
-	void resize(int, int);
-
-
-	//*** Code ***
-	switch (iMsg)
-	{
-	case WM_SETFOCUS:
-		gbActive = TRUE;
-		break;
-
-	case WM_KILLFOCUS:
-			gbActive = FALSE;
-			break;
-
-	case WM_SIZE:
-		resize(LOWORD(lParam), HIWORD(lParam));
-		break;
-
-	case WM_ERASEBKGND:
-		return(0);
-
-	case WM_KEYDOWN:
-		switch (LOWORD(wParam))
-		{
-		case VK_ESCAPE:
-			DestroyWindow(hwnd);
-			break;
-		}
-		break;
-
-	case WM_CHAR:
-		switch (LOWORD(wParam))
-		{
-		case 'F':
-		case 'f':
-			if (gbFullscreen == FALSE)
-			{
-				ToggleFullscreen();
-				gbFullscreen = TRUE;
-			}
-			else
-			{
-				ToggleFullscreen();
-				gbFullscreen = FALSE;
-			}
-			break;
-		}
-		break;
-
-	case WM_CLOSE:
-		DestroyWindow(hwnd);
-		break;
-
-	case WM_DESTROY:
-		PostQuitMessage(0);
-		break;
-
-	default:
-		break;
-	}
-
-
-	return(DefWindowProc(hwnd, iMsg, wParam, lParam));
-}
-
-
-
-void ToggleFullscreen(void)
-{
-	//*** Local Variable Declaration ****
-	MONITORINFO mi = { sizeof(MONITORINFO) };
-
-
-	//*** Code ***
-	if (gbFullscreen == FALSE)
-	{
-		dwStyle = GetWindowLong(ghwnd, GWL_STYLE);
-		if (dwStyle & WS_OVERLAPPEDWINDOW)
-		{
-			fprintf(gpFILE, "Window Contains WS_OVERLAPPEDWINDOW\n");
-
-			if (GetWindowPlacement(ghwnd, &wpPrev) && GetMonitorInfo(MonitorFromWindow(ghwnd, MONITORINFOF_PRIMARY), &mi))
-			{
-				SetWindowLong(ghwnd, GWL_STYLE, dwStyle & ~WS_OVERLAPPEDWINDOW);
-				SetWindowPos(ghwnd, HWND_TOP, mi.rcMonitor.left, mi.rcMonitor.top, mi.rcMonitor.right - mi.rcMonitor.left, mi.rcMonitor.bottom - mi.rcMonitor.top, SWP_NOZORDER | SWP_FRAMECHANGED);
-			}
-		}
-		ShowCursor(FALSE);
-	}
-	else
-	{
-		fprintf(gpFILE, "Window Is Now Already In Fullscreen Mode\n");
-		SetWindowPlacement(ghwnd, &wpPrev);
-		SetWindowLong(ghwnd, GWL_STYLE, dwStyle | WS_OVERLAPPEDWINDOW);
-		SetWindowPos(ghwnd, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOOWNERZORDER | SWP_NOZORDER | SWP_FRAMECHANGED);
-		ShowCursor(TRUE);
-		fprintf(gpFILE, "Now Window Is Normal\n");
-	}
-}
-
-
-
-int initialize(void)
+int Window::initialize(void)
 {
 	//*** Function Declarations ***
-	void printGLInfo(void);
+	void resize(int,int);
 	void uninitialize(void);
-	void resize(int, int);
 
 	//01 -  Initialization Of PFD 
 	ZeroMemory(&pfd, sizeof(PIXELFORMATDESCRIPTOR));
@@ -274,7 +73,7 @@ int initialize(void)
 
 
 	//02 - Get The DC
-	ghdc = GetDC(ghwnd);
+	ghdc = GetDC(myWindow.getWindowHandle());
 		if (ghdc == NULL)
 		{
 			fprintf(gpFILE, "GetDC Failed !!!\n\n");
@@ -322,8 +121,6 @@ int initialize(void)
 		fprintf(gpFILE, "glewInit() Failed !\n\n");
 		return(-6);
 	}
-	//Print GLINFO
-	printGLInfo();
 	
 
 	//----------------------------------------------------------------------------------------//
@@ -506,30 +303,6 @@ int initialize(void)
 
 
 
-void printGLInfo(void)
-{
-	//Variable Declaration 
-	GLint numExtension;
-	GLint i;
-
-	//code
-	fprintf(gpFILE, "OpenGL Vender       : %s\n", glGetString(GL_VENDOR));
-	fprintf(gpFILE, "OpenGL Renderer     : %s\n", glGetString(GL_RENDERER));//Driver Version
-	fprintf(gpFILE, "OpenGL Version      : %s\n", glGetString(GL_VERSION));
-	fprintf(gpFILE, "OpenGL GLSL Version : %s\n", glGetString(GL_SHADING_LANGUAGE_VERSION));
-	fprintf(gpFILE, "********************************************************\n");
-
-	//Supported Extensions List
-	glGetIntegerv(GL_NUM_EXTENSIONS, &numExtension);
-	for (i = 0; i < numExtension; i++)
-	{
-		fprintf(gpFILE, "%d : %s\n",i, glGetStringi(GL_EXTENSIONS, i));
-	}
-	fprintf(gpFILE, "********************************************************\n");
-}
-
-
-
 void resize(int width, int height)
 {
 	//*** Code ***
@@ -546,7 +319,7 @@ void resize(int width, int height)
 
 
 
-void display(void)
+void Window::display(void)
 {
 	//*** Code ***
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -570,7 +343,7 @@ void display(void)
 
 
 
-void update(void)
+void Window::update(void)
 {
 	//*** Code ***
 }
@@ -579,10 +352,6 @@ void update(void)
 
 void uninitialize(void)
 {
-	//*** Function Declarations ***
-	void ToggleFullscreen(void);
-
-
 	//Free Shader Program Object
 	if (shaderProgramObject)
 	{
@@ -639,10 +408,10 @@ void uninitialize(void)
 
 
 	//*** Code ***
-	if (gbFullscreen == TRUE)
+	if (myWindow.getWindowFullscreenStatus() == TRUE)
 	{
-		ToggleFullscreen();
-		gbFullscreen = FALSE;
+		myWindow.ToggleFullscreen();
+		myWindow.setWindowFullscreenStatus(FALSE);
 	}
 
 
@@ -664,16 +433,15 @@ void uninitialize(void)
 	//*** Release HDC ***
 	if (ghdc)
 	{
-		ReleaseDC(ghwnd, ghdc);
+		ReleaseDC(myWindow.getWindowHandle(), ghdc);
 		ghdc = NULL;
 	}
 
 
 	//*** Destroy Window ***
-	if (ghwnd)
+	if (myWindow.getWindowHandle())
 	{
-		DestroyWindow(ghwnd);
-		ghwnd = NULL;
+		DestroyWindow(myWindow.getWindowHandle());
 	}
 
 

@@ -1,7 +1,6 @@
 #include<windows.h>
 
-#include "..\include\core\OGL.h"
+#include "..\include\core\resource.hpp"
 
 MYICON ICON MyIcon.ico
 
-//Apal Systen FileName
