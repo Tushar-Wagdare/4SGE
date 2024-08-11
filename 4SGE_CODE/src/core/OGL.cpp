@@ -22,36 +22,61 @@ using namespace vmath;
 #pragma comment(lib, "glew32.lib")
 #pragma comment(lib, "OpenGL32.lib")
 
+//*** Global Function Declaration ***
+void display(void);
+void update(void);
+int initialize(void);
+
 ///PP Variables
+//*** Enums ***
+enum
+{
+	AMC_ATTRIBUTE_POSITION  = 0,
+	AMC_ATTRIBUTE_COLOR
+};
+
 GLuint shaderProgramObject  = 0;
 GLuint vao                  = 0;
 GLuint vbo_position         = 0;
 GLuint vbo_color            = 0;
 GLuint mvpMatrixUniform     = 0;
-mat4 perspectiveProjectionMatrix;//in vmath.h
+mat4 perspectiveProjectionMatrix;
 
-Window myWindow;
+Window* g_myWindow;
+
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLine, int iCmdShow)
 {
-	//*** Local vaiables *** 
+	//*** Variable declaratrion ***
+	void (*render[2])(void) = {display, update};
 
 	//*** Code ***
+	g_myWindow = new Window(WndProc);
+	g_myWindow->createWindow(TEXT("4SGE"), TEXT("4SGE : Tushar Wagdare"));
+
+
 	//*** Log file creation ***
-	if (fopen_s(&gpFILE, "..\\log\\Log.txt", "w") != 0)
-	{
-		MessageBox(NULL, TEXT("Log Create Hou Shakat Nahi"), TEXT("Error"), MB_OK || MB_ICONERROR);
-		exit(0);
-	}
-	fprintf(gpFILE, "Program Started Successfully\n\n");
+    if (fopen_s(&gpFILE, "..\\log\\Log.txt", "w") != 0)
+    {
+        MessageBox(NULL, TEXT("Log Create Hou Shakat Nahi"), TEXT("Error"), MB_OK || MB_ICONERROR);
+        exit(0);
+    }
+    fprintf(gpFILE, "Program Started Successfully\n\n");
+
+	if(initialize() < 0)
+    {
+        fprintf(gpFILE, "initialize() failed..\n");
+        exit(0);
+    }
+	fprintf(gpFILE, "initialize() successfull..\n");
 
 
-
-	return(myWindow.initGameLoop());
+	return(g_myWindow->initGameLoop(render));
 }
 
 
-int Window::initialize(void)
+
+int initialize(void)
 {
 	//*** Function Declarations ***
 	void resize(int,int);
@@ -73,10 +98,10 @@ int Window::initialize(void)
 
 
 	//02 - Get The DC
-	ghdc = GetDC(myWindow.getWindowHandle());
+	ghdc = GetDC(g_myWindow->getWindowHandle());
 		if (ghdc == NULL)
 		{
-			fprintf(gpFILE, "GetDC Failed !!!\n\n");
+			fprintf(gpFILE,"GetDC Failed !!!\n\n");
 			return(-1);
 		}
 
@@ -85,7 +110,7 @@ int Window::initialize(void)
 	iPexelFormatIndex = ChoosePixelFormat(ghdc, &pfd);
 	if (iPexelFormatIndex == 0)
 	{
-		fprintf(gpFILE, "ChoosepixelFormat() Failed\n\n");
+		fprintf(gpFILE,"ChoosepixelFormat() Failed\n\n");
 		return(-2);
 	}
 	
@@ -93,7 +118,7 @@ int Window::initialize(void)
 	//04 - Set Obtained Pixel Format
 	if (SetPixelFormat(ghdc, iPexelFormatIndex, &pfd) == FALSE)
 	{
-		fprintf(gpFILE, "SetPixelFormat() Failed\n\n");
+		fprintf(gpFILE,"SetPixelFormat() Failed\n\n");
 		return(-3);
 	}
 
@@ -102,7 +127,7 @@ int Window::initialize(void)
 	ghrc = wglCreateContext(ghdc);
 	if (ghrc == NULL)
 	{
-		fprintf(gpFILE, "wglCreateContex() Failed\n\n");
+		fprintf(gpFILE,"wglCreateContex() Failed\n\n");
 		return(-4);
 	}
 
@@ -110,7 +135,7 @@ int Window::initialize(void)
 	//06 - Now 'ghdc' End Its Roll And Give Controll To 'ghrc'
 	if (wglMakeCurrent(ghdc, ghrc) == FALSE)
 	{
-		fprintf(gpFILE, "wglMakeCurrent() failed\n\n");
+		fprintf(gpFILE,"wglMakeCurrent() failed\n\n");
 		return(-5);
 	}
 
@@ -118,7 +143,7 @@ int Window::initialize(void)
 	//Initialize GLEW
 	if (glewInit() != GLEW_OK)
 	{
-		fprintf(gpFILE, "glewInit() Failed !\n\n");
+		fprintf(gpFILE,"glewInit() Failed !\n\n");
 		return(-6);
 	}
 	
@@ -156,8 +181,8 @@ int Window::initialize(void)
 			if (szInfoLog != NULL)
 			{
 				glGetShaderInfoLog(vertexShaderObject, infoLogLength, NULL, szInfoLog);
-				fprintf(gpFILE, "Vertex Shader Compilation Error Log:%s\n", szInfoLog);
-				fprintf(gpFILE, "********************************************************\n");
+				fprintf(gpFILE,"Vertex Shader Compilation Error Log:%s\n", szInfoLog);
+				fprintf(gpFILE,"********************************************************\n");
 				free(szInfoLog);
 				szInfoLog = NULL;
 			}
@@ -195,8 +220,8 @@ int Window::initialize(void)
 			if (szInfoLog != NULL)
 			{
 				glGetShaderInfoLog(fragmentShaderObject, infoLogLength, NULL, szInfoLog);
-				fprintf(gpFILE, "Fragment Shader Compilation Error Log:%s\n", szInfoLog);
-				fprintf(gpFILE, "********************************************************\n");
+				fprintf(gpFILE,"Fragment Shader Compilation Error Log:%s\n", szInfoLog);
+				fprintf(gpFILE,"********************************************************\n");
 				free(szInfoLog);
 				szInfoLog = NULL;
 			}
@@ -227,8 +252,8 @@ int Window::initialize(void)
 			if (szInfoLog != NULL)
 			{
 				glGetProgramInfoLog(shaderProgramObject, infoLogLength, NULL, szInfoLog);
-				fprintf(gpFILE, "Shader Program Linking Error Log:%s\n", szInfoLog);
-				fprintf(gpFILE, "********************************************************\n");
+				fprintf(gpFILE,"Shader Program Linking Error Log:%s\n", szInfoLog);
+				fprintf(gpFILE,"********************************************************\n");
 				free(szInfoLog);
 				szInfoLog = NULL;
 			}
@@ -319,7 +344,7 @@ void resize(int width, int height)
 
 
 
-void Window::display(void)
+void display(void)
 {
 	//*** Code ***
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -343,7 +368,7 @@ void Window::display(void)
 
 
 
-void Window::update(void)
+void update(void)
 {
 	//*** Code ***
 }
@@ -406,15 +431,6 @@ void uninitialize(void)
 	}
 	
 
-
-	//*** Code ***
-	if (myWindow.getWindowFullscreenStatus() == TRUE)
-	{
-		myWindow.ToggleFullscreen();
-		myWindow.setWindowFullscreenStatus(FALSE);
-	}
-
-
 	//*** Make The hdc As Current DC ***//
 	if (wglGetCurrentContext() == ghrc)
 	{
@@ -433,24 +449,8 @@ void uninitialize(void)
 	//*** Release HDC ***
 	if (ghdc)
 	{
-		ReleaseDC(myWindow.getWindowHandle(), ghdc);
+		ReleaseDC(g_myWindow->getWindowHandle(), ghdc);
 		ghdc = NULL;
-	}
-
-
-	//*** Destroy Window ***
-	if (myWindow.getWindowHandle())
-	{
-		DestroyWindow(myWindow.getWindowHandle());
-	}
-
-
-	//*** Close Log File ***
-	if (gpFILE)
-	{
-		fprintf(gpFILE, "\nProgram Ended Successfully\n");
-		fclose(gpFILE);
-		gpFILE = NULL;
 	}
 }
 

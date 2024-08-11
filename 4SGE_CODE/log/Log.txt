@@ -1,4 +1,3 @@
 Program Started Successfully
 
-
-Program Ended Successfully
+initialize() successfull..

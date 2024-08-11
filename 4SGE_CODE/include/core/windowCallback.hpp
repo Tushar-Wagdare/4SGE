@@ -1,6 +1,7 @@
 #include"window.hpp"
 
-extern Window myWindow;
+extern Window* g_myWindow;
+
 
 LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -12,12 +13,12 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 	switch (iMsg)
 	{
 	case WM_SETFOCUS:
-		myWindow.setWindowStatus(TRUE);
+		g_myWindow->setWindowStatus(TRUE);
 		break;
 
 	case WM_KILLFOCUS:
-			myWindow.setWindowStatus(FALSE);
-			break;
+		g_myWindow->setWindowStatus(FALSE);
+		break;
 
 	case WM_SIZE:
 		resize(LOWORD(lParam), HIWORD(lParam));
@@ -40,16 +41,16 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 		{
 		case 'F':
 		case 'f':
-			if (myWindow.getWindowFullscreenStatus() == FALSE)
+			if (g_myWindow->getWindowFullscreenStatus() == FALSE)
 			{
-				myWindow.ToggleFullscreen();
-				myWindow.setWindowFullscreenStatus(TRUE);
+				g_myWindow->ToggleFullscreen();
+				g_myWindow->setWindowFullscreenStatus(TRUE);
 			}
 			else
 			{
-				myWindow.ToggleFullscreen();
-				myWindow.setWindowFullscreenStatus(FALSE);
-			}
+				g_myWindow->ToggleFullscreen();
+				g_myWindow->setWindowFullscreenStatus(FALSE);
+			} 
 			break;
 		}
 		break;
@@ -69,3 +70,4 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 
 	return(DefWindowProc(hwnd, iMsg, wParam, lParam));
 }
+
