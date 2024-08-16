@@ -2,73 +2,88 @@
 #define UNICODE
 #endif
 
-///*** Standard C Headers ***
+
+///*** HEADERS ***///
+// Standard C Headers
 #include<stdio.h>
 #include<stdlib.h>
-
-///*** My Headers ***
+// My Headers
 #include "..\..\include\core\window.hpp"
 #include "..\..\include\core\windowCallback.hpp"
-
-//*** OpenGL Headers ***//
-//#include<gl/glew.h>
+//*** OpenGL Headers 
 #include<C:/glew-2.1.0/include/GL/glew.h>
 #include<gl/GL.h>
 #include"..\..\include\math\vmath.h"
-//*** Name space ***
+
+
+//*** Name space ***///
 using namespace vmath;
 
-//*** link With OpenGL Library//
+
+//*** link With OpenGL Librar ***///
 #pragma comment(lib, "glew32.lib")
 #pragma comment(lib, "OpenGL32.lib")
 
-//*** Global Function Declaration ***
+
+//*** Global Function Declaration ***///
 void display(void);
 void update(void);
 int initialize(void);
 
-///PP Variables
-//*** Enums ***
+
+//*** Global Variables Declaration ***///
+// Enums 
 enum
 {
 	AMC_ATTRIBUTE_POSITION  = 0,
 	AMC_ATTRIBUTE_COLOR
 };
-
+// PP Variables
 GLuint shaderProgramObject  = 0;
 GLuint vao                  = 0;
 GLuint vbo_position         = 0;
 GLuint vbo_color            = 0;
 GLuint mvpMatrixUniform     = 0;
 mat4 perspectiveProjectionMatrix;
-
+// Window Variables
+FILE* gpFILE                = NULL;
 Window* g_myWindow;
 
 
+
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLine, int iCmdShow)
-{
-	//*** Variable declaratrion ***
+{ 
+	//*** Variable declaratrion ***///
 	void (*render[2])(void) = {display, update};
 
-	//*** Code ***
+
+	//*** Code ***///
 	g_myWindow = new Window(WndProc);
 	g_myWindow->createWindow(TEXT("4SGE"), TEXT("4SGE : Tushar Wagdare"));
 
 
-	//*** Log file creation ***
+	// Log file Creation
     if (fopen_s(&gpFILE, "..\\log\\Log.txt", "w") != 0)
     {
         MessageBox(NULL, TEXT("Log Create Hou Shakat Nahi"), TEXT("Error"), MB_OK || MB_ICONERROR);
         exit(0);
     }
-    fprintf(gpFILE, "Program Started Successfully\n\n");
+	else
+	{
+    	fprintf(gpFILE, "Program Started Successfully\n\n");
+	}
 
+
+	// OpenGL Initialization
 	if(initialize() < 0)
     {
         fprintf(gpFILE, "initialize() failed..\n");
         exit(0);
     }
-	fprintf(gpFILE, "initialize() successfull..\n");
+	else
+	{
+		fprintf(gpFILE, "initialize() successfull..\n");
+	}
 
 
 	return(g_myWindow->initGameLoop(render));
@@ -78,69 +93,20 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLi
 
 int initialize(void)
 {
-	//*** Function Declarations ***
+	//*** Function Declarations ***///
 	void resize(int,int);
 	void uninitialize(void);
 
-	//01 -  Initialization Of PFD 
-	ZeroMemory(&pfd, sizeof(PIXELFORMATDESCRIPTOR));
-	
-	pfd.nSize      = sizeof(PIXELFORMATDESCRIPTOR);
-	pfd.nVersion   = 1;
-	pfd.dwFlags    = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER;
-	pfd.iPixelType = PFD_TYPE_RGBA;
-	pfd.cColorBits = 32;
-	pfd.cRedBits   = 8;
-	pfd.cGreenBits = 8;
-	pfd.cBlueBits  = 8;
-	pfd.cAlphaBits = 8;
-	pfd.cDepthBits = 32;
 
-
-	//02 - Get The DC
-	ghdc = GetDC(g_myWindow->getWindowHandle());
-		if (ghdc == NULL)
-		{
-			fprintf(gpFILE,"GetDC Failed !!!\n\n");
-			return(-1);
-		}
-
-
-	//03 - Tell OS Hya PFD shi match honara PFD de
-	iPexelFormatIndex = ChoosePixelFormat(ghdc, &pfd);
-	if (iPexelFormatIndex == 0)
+	///*** Code ***///
+	if(g_myWindow->switchToRenderingContext() < 0)
 	{
-		fprintf(gpFILE,"ChoosepixelFormat() Failed\n\n");
-		return(-2);
-	}
-	
-
-	//04 - Set Obtained Pixel Format
-	if (SetPixelFormat(ghdc, iPexelFormatIndex, &pfd) == FALSE)
-	{
-		fprintf(gpFILE,"SetPixelFormat() Failed\n\n");
-		return(-3);
+		fprintf(gpFILE,"switchToRenderingContext() Failed\n\n");
+		return(-1);
 	}
 
 
-	//05 - Tell WGL Bridging library To Give OpenGL Copatible DC From 'ghdc'
-	ghrc = wglCreateContext(ghdc);
-	if (ghrc == NULL)
-	{
-		fprintf(gpFILE,"wglCreateContex() Failed\n\n");
-		return(-4);
-	}
-
-
-	//06 - Now 'ghdc' End Its Roll And Give Controll To 'ghrc'
-	if (wglMakeCurrent(ghdc, ghrc) == FALSE)
-	{
-		fprintf(gpFILE,"wglMakeCurrent() failed\n\n");
-		return(-5);
-	}
-
-
-	//Initialize GLEW
+	// Initialize GLEW
 	if (glewInit() != GLEW_OK)
 	{
 		fprintf(gpFILE,"glewInit() Failed !\n\n");
@@ -148,8 +114,8 @@ int initialize(void)
 	}
 	
 
-	//----------------------------------------------------------------------------------------//
-	//Vertex Shader
+	///*** Shade Code ***///
+	// Vertex Shader
 	const GLchar* vertexShaderSourceCode =
 		"#version 460 core" \
 		"\n" \
@@ -163,15 +129,15 @@ int initialize(void)
 		"oColor = aColor;" \
 		"}";
 
-	GLuint vertexShaderObject = glCreateShader(GL_VERTEX_SHADER);///Creates Empty Shader Object
-	glShaderSource(vertexShaderObject, 1, (const GLchar**)&vertexShaderSourceCode, NULL);///
+	GLuint vertexShaderObject = glCreateShader(GL_VERTEX_SHADER);
+	glShaderSource(vertexShaderObject, 1, (const GLchar**)&vertexShaderSourceCode, NULL);
 
-	glCompileShader(vertexShaderObject);///Return NoneZero Value on Successfull Compiation
+	glCompileShader(vertexShaderObject);
 	GLint status        = 0;
 	GLint infoLogLength = 0;
 	GLchar* szInfoLog   = NULL;
 
-	glGetShaderiv(vertexShaderObject, GL_COMPILE_STATUS, &status);//EC step 1
+	glGetShaderiv(vertexShaderObject, GL_COMPILE_STATUS, &status);
 	if (status == GL_FALSE)
 	{
 		glGetShaderiv(vertexShaderObject, GL_INFO_LOG_LENGTH, &infoLogLength);
@@ -191,7 +157,7 @@ int initialize(void)
 	}
 	 
 
-	//Fragment Shader
+	// Fragment Shader
 	const GLchar* fragmentShaderSourceCode =
 		"#version 460 core" \
 		"\n" \
@@ -229,7 +195,8 @@ int initialize(void)
 		uninitialize();
 	}
 
-	//Shader Program
+
+	// Shader Program
 	shaderProgramObject = glCreateProgram();
 
 	glAttachShader(shaderProgramObject, vertexShaderObject);
@@ -261,10 +228,12 @@ int initialize(void)
 		uninitialize();
 	}
 
-	//Get Shader Uniform Location
+
+	// Get Shader Uniform Location
 	mvpMatrixUniform = glGetUniformLocation(shaderProgramObject, "uMVPMatrix");
 
-	//Declare Position And Color Arrays
+
+	// Declare Position And Color Arrays
 	const GLfloat triangle_position[] = 
 	{
 		0.0f,1.0f,0.0f,
@@ -279,11 +248,13 @@ int initialize(void)
 		0.0f,0.0f,1.0f 
 	};
 
-	//VAO
+
+	// VAO
 	glGenVertexArrays(1, &vao);
 	glBindVertexArray(vao);
 
-	//VBO for Position 
+
+	// VBO for Position 
 	glGenBuffers(1, &vbo_position);
 	glBindBuffer(GL_ARRAY_BUFFER, vbo_position);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(triangle_position), triangle_position, GL_STATIC_DRAW);
@@ -292,7 +263,8 @@ int initialize(void)
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-	//VBO for color
+
+	// VBO for color
 	glGenBuffers(1, &vbo_color);
 	glBindBuffer(GL_ARRAY_BUFFER, vbo_color);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(triangle_color), triangle_color, GL_STATIC_DRAW);
@@ -301,25 +273,24 @@ int initialize(void)
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-	//
 	glBindVertexArray(0);
-	//-------------------------------------------------------------------------------------//
+	
 
-	//07 - 2nd step Enabling Depth
+	// Enabling Depth
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LEQUAL);
 	glClearDepth(1.0f);
 
 
-	//08 - Set the Clear Color of Window To Blue
+	// Set the Clear Color of Window To Blue
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
 
-	//initialize orthographicProjectionMatrix
+	// initialize orthographicProjectionMatrix
 	perspectiveProjectionMatrix = vmath::mat4::identity();
 
 
-	//Warmup call
+	// Warmup call
 	resize(WIN_WIDTH, WIN_HIGHT);
 
 
@@ -330,15 +301,17 @@ int initialize(void)
 
 void resize(int width, int height)
 {
-	//*** Code ***
+	//*** Code ***///
 	if (height <= 0)
 	{
 		height = 1;
 	}
 
-	//Set perspective projection matrix
+	// Set perspective projection matrix
 	perspectiveProjectionMatrix = vmath::perspective(45.0f, (GLfloat)width / (GLfloat)height, 0.1f, 100.0f);
 
+
+	// Set Viewport
 	glViewport(0, 0, (GLsizei)width, (GLsizei)height);
 }
 
@@ -346,16 +319,18 @@ void resize(int width, int height)
 
 void display(void)
 {
-	//*** Code ***
+	//*** Code ***///
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	glUseProgram(shaderProgramObject);
 
-	//Transformation
+
+	// Transformation
 	mat4 modelViewMatrix = vmath::translate(0.0f, 0.0f, -3.0f);
 	mat4 modelViewProjectionMatrix = perspectiveProjectionMatrix * modelViewMatrix;
 
-	//push above mvp int vertex shader's mvp uniform
+
+	// push above mvp int vertex shader's mvp uniform
 	glUniformMatrix4fv(mvpMatrixUniform, 1, GL_FALSE, modelViewProjectionMatrix);
 
 	glBindVertexArray(vao);
@@ -363,21 +338,22 @@ void display(void)
 	glBindVertexArray(0);
 	glUseProgram(0);
 
-	SwapBuffers(ghdc);
+	SwapBuffers(g_myWindow->getDeviceContext());
 }
 
 
 
 void update(void)
 {
-	//*** Code ***
+	//*** Code ***///
 }
 
 
 
 void uninitialize(void)
 {
-	//Free Shader Program Object
+	///*** Code ***///
+	// Free Shader Program Object
 	if (shaderProgramObject)
 	{
 		glUseProgram(shaderProgramObject);
@@ -407,7 +383,7 @@ void uninitialize(void)
 	}
 
 
-	//Delete VBO Color
+	// Delete VBO Color
 	if (vbo_color)
 	{
 		glDeleteBuffers(1, &vbo_color);
@@ -415,7 +391,7 @@ void uninitialize(void)
 	}
 
 
-	//Delete VBO Position
+	// Delete VBO Position
 	if (vbo_position)
 	{
 		glDeleteBuffers(1, &vbo_position);
@@ -423,34 +399,11 @@ void uninitialize(void)
 	}
 
 
-	//Delete VAO
+	// Delete VAO
 	if (vao)
 	{
 		glDeleteVertexArrays(1, &vao);
 		vao = 0;
-	}
-	
-
-	//*** Make The hdc As Current DC ***//
-	if (wglGetCurrentContext() == ghrc)
-	{
-		wglMakeCurrent(NULL, NULL);
-	}
-
-
-	//*** Destroy Rendering Contex***
-	if (ghrc)
-	{
-		wglDeleteContext(ghrc);
-		ghrc = NULL;
-	}
-
-
-	//*** Release HDC ***
-	if (ghdc)
-	{
-		ReleaseDC(g_myWindow->getWindowHandle(), ghdc);
-		ghdc = NULL;
 	}
 }
 

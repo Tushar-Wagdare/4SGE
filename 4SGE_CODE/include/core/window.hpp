@@ -10,21 +10,22 @@
 
 
 //*** MACRO'S ***  
+#define SUCCESS   1
+#define FAIL      0
 #define WIN_WIDTH 800
-#define WIN_HIGHT 600  
+#define WIN_HIGHT 600
+
+typedef int status_t;
 
 
 //*** Globle Function Declarations ***
-//*** Globle Variable Declaration ***
-FILE* gpFILE                = NULL;
-//OpenGL Related Globle Variables
-PIXELFORMATDESCRIPTOR pfd;
-int iPexelFormatIndex  = 0;
-HDC ghdc               = NULL;
-HGLRC ghrc             = NULL;
+//*** Globle Variable Declaration  ***
 
 
-//*** Class ****
+
+
+
+//*** Class ***
 class Window
 {
     private:
@@ -36,52 +37,28 @@ class Window
         BOOL isWindowFullscreen     = FALSE;
         DWORD dwStyle;
         WINDOWPLACEMENT wpPrev;
+
+        int iPexelFormatIndex       = 0;
+        HDC ghdc                    = NULL;
+        HGLRC ghrc                  = NULL;
         
     public:
         Window(
             /* Mandatory arguments */
-            WNDPROC lpfnWndProc,
+            WNDPROC,
             /* Default arguments */
             int iBrushColor         = BLACK_BRUSH,
             LPCWSTR lpCursorName    = IDC_ARROW,
             LPCWSTR lpIconName      = IDI_APPLICATION,
             LPCWSTR lpSmallIconName = IDI_APPLICATION,
             LPCWSTR lpszMenuName    = NULL,
-            UINT style              = CS_HREDRAW | CS_VREDRAW | CS_OWNDC
-        )
-        {
-            hwnd = NULL;
-
-            ZeroMemory(&wndclass, sizeof(WNDCLASSEX));
-            ZeroMemory(&msg, sizeof(MSG));
-
-            //*** WNDCLASSEX INITIALIZATION ***
-            wndclass.cbSize        = sizeof(WNDCLASSEX);
-            wndclass.style         = style;
-            wndclass.cbClsExtra    = 0;
-            wndclass.cbWndExtra    = 0;
-            wndclass.lpfnWndProc   = lpfnWndProc;
-            wndclass.hInstance     = hInstance;
-            wndclass.hbrBackground = (HBRUSH)GetStockObject(iBrushColor);
-            wndclass.hIcon         = LoadIcon((HINSTANCE)NULL, lpIconName);;
-            wndclass.hCursor       = LoadCursor(NULL, lpCursorName);
-            wndclass.lpszClassName = TEXT("4SGE");
-            wndclass.lpszMenuName  = NULL;
-            wndclass.hIconSm       = LoadIcon((HINSTANCE)NULL, lpSmallIconName);
-
-            //*** REGISTER WNDCLASSEX ***
-            if (!RegisterClassEx(&wndclass))
-            {
-                MessageBox((HWND)NULL, TEXT("Failed to register a window class"), TEXT("RegisterClassEx"), MB_ICONERROR | MB_TOPMOST);
-                ExitProcess(EXIT_FAILURE);
-            }
-        }
+            UINT style              = CS_HREDRAW | CS_VREDRAW | CS_OWNDC);
 
 
         void createWindow(
             /* Mandatory arguments */
-            LPCWSTR lpszClassName, 
-            LPCWSTR lpszAppName,
+            LPCWSTR, 
+            LPCWSTR,
             /* Default arguments */
             DWORD dwExStyle         = WS_EX_APPWINDOW,
             DWORD dwWindowStyle     = WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN | WS_CLIPSIBLINGS | WS_VISIBLE,
@@ -92,166 +69,46 @@ class Window
             HWND hParentWindow      = (HWND)NULL,
             HMENU hMenu             = (HMENU)NULL,
             LPVOID lpParam          = (LPVOID)NULL,
-            int nShowCmd            = SW_SHOW){
-
-            //*** CREATE WINDOW ***
-            hwnd = CreateWindowEx(dwExStyle,
-                lpszClassName,
-                lpszAppName,
-                dwWindowStyle,  
-                X,
-                Y,
-                nWidth,
-                nHeight,
-                hParentWindow,
-                hMenu,
-                hInstance,
-                lpParam);
-
-            if (NULL == hwnd)
-            {
-                MessageBox((HWND)NULL, TEXT("Failed to create an application window"), TEXT("CreateWindowEx"), MB_ICONERROR | MB_TOPMOST);
-                ExitProcess(EXIT_FAILURE);
-            }
-
-
-            //*** SHOW THE WINDOW ***
-            ShowWindow(hwnd, nShowCmd);
-            SetForegroundWindow(hwnd);
-            SetFocus(hwnd);
-        }
+            int nShowCmd            = SW_SHOW);
 
         
-        HWND getWindowHandle()
-        {
-            return(hwnd);
-        }
+        HWND getWindowHandle();
 
 
-        void setWindowStatus(BOOL status)
-        {
-            isWindoActive = status;
-        }
+        void setWindowStatus(BOOL);
 
 
-        BOOL getWindowStatus(void)
-        {
-            return(isWindoActive);
-        }
+        BOOL getWindowStatus(void);
 
 
-        void killWindow()
-        {
-            DestroyWindow(hwnd);
-        }
+        void killWindow();
 
 
-        int initGameLoop(void (*render[2])(void))
-        {
-            BOOL bDone = FALSE;
-
-            while(bDone == FALSE)
-            {
-                if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
-                {
-                    if (msg.message == WM_QUIT)
-                        bDone = TRUE;
-                    else
-                    {
-                        TranslateMessage(&msg);
-                        DispatchMessage(&msg);
-                    }
-                }
-                else
-                {
-                    if (getWindowStatus() == TRUE)
-                    {
-                        //*** Render ***
-                        render[0]();
-
-                        //*** Update ***
-                        render[1]();
-                    }
-                }
-            }
-
-            return((int)msg.wParam);
-        }
+        int initGameLoop(void (*[2])(void));
 
 
-        int initMessageLoop(void)
-        {
-            BOOL bDone = FALSE;
-
-            if (PeekMessage(&msg, (HWND)NULL, 0, 0, PM_REMOVE))
-			{
-				if (msg.message == WM_QUIT)
-					bDone = TRUE;
-				else
-				{
-					TranslateMessage(&msg);
-					DispatchMessage(&msg);
-				}
-			}
-
-            return((int)msg.wParam);
-        }
+        int initMessageLoop(void);
 
 
-        void setWindowFullscreenStatus(BOOL status)
-        {
-            isWindowFullscreen = status;
-        }
+        int switchToRenderingContext(PIXELFORMATDESCRIPTOR pfd = {NULL});
 
 
-        BOOL getWindowFullscreenStatus(void)
-        {
-            return(isWindowFullscreen);
-        }
+        HDC getDeviceContext(void);
 
 
-        void ToggleFullscreen(void)
-        {
-            //*** Local Variable Declaration ****
-            MONITORINFO mi = { sizeof(MONITORINFO) };
+        HGLRC getRenderingContext(void);
 
 
-            //*** Code ***
-            if (isWindowFullscreen == FALSE)
-            { 
-                dwStyle          = GetWindowLong(hwnd, GWL_STYLE);
-                if (dwStyle & WS_OVERLAPPEDWINDOW)
-                {
-                    if (GetWindowPlacement(hwnd, &wpPrev) && GetMonitorInfo(MonitorFromWindow(hwnd, MONITORINFOF_PRIMARY), &mi))
-                    {
-                        SetWindowLong(hwnd, GWL_STYLE, dwStyle & ~WS_OVERLAPPEDWINDOW);
-                        SetWindowPos(hwnd, HWND_TOP, mi.rcMonitor.left, mi.rcMonitor.top, mi.rcMonitor.right - mi.rcMonitor.left, mi.rcMonitor.bottom - mi.rcMonitor.top, SWP_NOZORDER | SWP_FRAMECHANGED);
-                    }
-                }
-                ShowCursor(FALSE);
-            }
-            else
-            {
-                SetWindowPlacement(hwnd, &wpPrev);
-                SetWindowLong(hwnd, GWL_STYLE, dwStyle | WS_OVERLAPPEDWINDOW);
-                SetWindowPos(hwnd, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOOWNERZORDER | SWP_NOZORDER | SWP_FRAMECHANGED);
-                ShowCursor(TRUE);
-            }
-        }
+        void setWindowFullscreenStatus(BOOL);
+
+
+        BOOL getWindowFullscreenStatus(void);
+
+
+        void ToggleFullscreen(void);
 
     
-        ~Window()
-        {
-            //*** Code ***
-            if (getWindowFullscreenStatus() == TRUE)
-            {
-                ToggleFullscreen();
-                setWindowFullscreenStatus(FALSE);
-            }
-
-            //*** Destroy Window ***
-	        killWindow();
-        }
+        ~Window();
 };
 
 #endif
