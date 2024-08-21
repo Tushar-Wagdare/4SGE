@@ -1,31 +1,28 @@
 #ifndef _WINDOW_HPP
 #define _WINDOW_HPP
 
+
 #ifndef UNICODE
 #define UNICODE
 #endif
 
-//*** Standard Windows Headers ***
+
+///*** Standard Windows Headers ***///
 #include<windows.h>
 
 
-//*** MACRO'S ***  
+///*** MACRO'S ***///  
 #define SUCCESS   1
 #define FAIL      0
 #define WIN_WIDTH 800
 #define WIN_HIGHT 600
 
+
+///*** Typedefs ***///
 typedef int status_t;
 
 
-//*** Globle Function Declarations ***
-//*** Globle Variable Declaration  ***
-
-
-
-
-
-//*** Class ***
+///*** Class ***///
 class Window
 {
     private:
@@ -43,7 +40,8 @@ class Window
         HGLRC ghrc                  = NULL;
         
     public:
-        Window(
+        Window
+        (
             /* Mandatory arguments */
             WNDPROC,
             /* Default arguments */
@@ -52,10 +50,12 @@ class Window
             LPCWSTR lpIconName      = IDI_APPLICATION,
             LPCWSTR lpSmallIconName = IDI_APPLICATION,
             LPCWSTR lpszMenuName    = NULL,
-            UINT style              = CS_HREDRAW | CS_VREDRAW | CS_OWNDC);
+            UINT style              = CS_HREDRAW | CS_VREDRAW | CS_OWNDC
+        );
 
 
-        void createWindow(
+        void createWindow
+        (
             /* Mandatory arguments */
             LPCWSTR, 
             LPCWSTR,
@@ -69,7 +69,8 @@ class Window
             HWND hParentWindow      = (HWND)NULL,
             HMENU hMenu             = (HMENU)NULL,
             LPVOID lpParam          = (LPVOID)NULL,
-            int nShowCmd            = SW_SHOW);
+            int nShowCmd            = SW_SHOW
+        );
 
         
         HWND getWindowHandle();
